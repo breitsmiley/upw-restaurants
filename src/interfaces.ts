@@ -4,16 +4,23 @@ export interface IRestScheduleWorkTime {
 }
 
 export interface IRestSchedule {
-  mon: IRestScheduleWorkTime;
-  tue: IRestScheduleWorkTime;
-  wed: IRestScheduleWorkTime;
-  thu: IRestScheduleWorkTime;
-  fri: IRestScheduleWorkTime;
-  sat: IRestScheduleWorkTime;
-  sun: IRestScheduleWorkTime;
+  Mon: IRestScheduleWorkTime;
+  Tue: IRestScheduleWorkTime;
+  Wed: IRestScheduleWorkTime;
+  Thu: IRestScheduleWorkTime;
+  Fri: IRestScheduleWorkTime;
+  Sat: IRestScheduleWorkTime;
+  Sun: IRestScheduleWorkTime;
 }
 
 export interface IRest {
   name: string;
   schedule: IRestSchedule;
+  scheduleRAW: string;
+}
+
+export interface IRestTimeGroup {
+  start: number;
+  end: number;
+  days: string[];
 }
