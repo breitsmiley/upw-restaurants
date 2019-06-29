@@ -1,0 +1,20 @@
+version: '3.7'
+
+services:
+
+  r-node:
+    image: node:12.5.0-alpine
+    environment:
+      - APP_D_ENTRYPOINT_MODE=init
+    volumes:
+      - type: bind
+        source: ./
+        target: /app
+    ports:
+      - "${NODE_DEBUG_PORT}:9229"
+      - "${NODE_HOST_HTTP_PORT}:3000"
+#    command: ["npm", "run", "start:dev"]
+    command: ["npm", "run", "start:debug"]
+#    command: ["ping", "127.0.0.1"]
+    working_dir: /app
+
