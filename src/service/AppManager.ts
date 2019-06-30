@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import * as readline from 'readline';
-import { IRest, IRestSchedule, IRestScheduleWorkTime, IRestTimeGroup } from "../interfaces";
+import { MysqlConnectionOptions } from "typeorm/driver/mysql/MysqlConnectionOptions";
+import { createConnection, Connection, getConnection } from "typeorm";
+import { IRest, IRestSchedule, IRestTimeGroup } from "../interfaces";
+import { RestaurantRepository, WeekdayRepository, ScheduleRepository } from "../repository";
 
 const DEFAULT_CSV_FILE_PATH = `${__dirname}/../db/rest_hours.csv`;
 
@@ -12,6 +15,29 @@ export class AppManager {
     if (!fs.existsSync(DEFAULT_CSV_FILE_PATH)) {
       throw new Error(`File "${DEFAULT_CSV_FILE_PATH}" not found`);
     }
+  }
+
+  public provideMysqlConnectionOptions(): MysqlConnectionOptions {
+    return {
+      name: "default",
+      type: "mysql",
+      host: "r-db",
+      port: 3306,
+      username: "rest",
+      password: "rest",
+      database: "rest",
+      synchronize: false,
+      logging: false,
+      entities: [
+        "src/entity/**/*.ts"
+      ],
+      migrations: [
+        "src/migration/**/*.ts"
+      ],
+      cli: {
+        migrationsDir: 'src/migration'
+      },
+    };
   }
 
   private calcSecondsSinceDayStart(line: string): number {
@@ -113,22 +139,25 @@ export class AppManager {
     }
   }
 
-  private async loadCSV(csvPath: string) {
+  private async loadCSV(csvPath: string): Promise<IRest[]> {
 
-    this.restData = [];
+    const data: IRest[] = [];
 
     const rl = readline.createInterface({
       input: fs.createReadStream(`${csvPath}`)
     });
 
     for await (const line of rl) {
-      this.restData.push(this.parseCsvLine(line));
+      data.push(this.parseCsvLine(line));
     }
 
-    // this.restData.forEach(e => {
+    // data.forEach(e => {
     //   console.log(e.name, e.schedule, e.scheduleRAW);
     //   console.log('--------------------------------------');
     // });
+    this.restData = data;
+
+    return data;
 
   }
 
@@ -150,6 +179,19 @@ export class AppManager {
 
   }
 
+  private getHourAndMinutesFromSeconds(seconds: number) {
+    const hIntDec = seconds / 3600;
+    const hFloatDec = hIntDec % 1;
+
+    let h = 0, m = hFloatDec * 60;
+
+    if (hIntDec >= 1) {
+      h = hIntDec - hFloatDec;
+    }
+
+    return [h, m]
+  }
+
   public async findOpenRestaurantsInDB(searchDatetime: Date): Promise<string[]> {
 
     await this.loadCSV(DEFAULT_CSV_FILE_PATH);
@@ -166,6 +208,39 @@ export class AppManager {
       return -1 !== idx
     }).map(element => element.scheduleRAW);
 
+  }
+
+
+  /**
+   * TODO improve performance by bulk insert
+   */
+  public async migrateFromCsvToDb() {
+
+    const restData = await this.loadCSV(DEFAULT_CSV_FILE_PATH);
+
+    const conn = getConnection();
+    const restaurantRepository = conn.getCustomRepository(RestaurantRepository);
+    const weekdayRepository = conn.getCustomRepository(WeekdayRepository);
+    const scheduleRepository = conn.getCustomRepository(ScheduleRepository);
+
+    for (const oneRest of restData) {
+
+      const restEntityObj = await restaurantRepository.add(oneRest.name);
+
+      for (const oneSchedule of oneRest.schedule) {
+        const weekdayEntityObj = await weekdayRepository.findOne({
+          shortName: oneSchedule.dayOfWeekAlias
+        });
+
+        let [h, m] = this.getHourAndMinutesFromSeconds(oneSchedule.open);
+        const openTime = new Date(0, 0, 0, h, m, 0);
+
+        [h, m] = this.getHourAndMinutesFromSeconds(oneSchedule.close);
+        const closeTime = new Date(0, 0, 0, h, m, 0);
+        await scheduleRepository.add(restEntityObj, weekdayEntityObj, openTime, closeTime)
+      }
+
+    }
   }
 
 }

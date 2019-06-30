@@ -1,4 +1,6 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
+import { AppManager } from "../service/AppManager";
+const appManager = new AppManager();
 
 export class init1561893899425 implements MigrationInterface {
 
@@ -34,5 +36,6 @@ export class init1561893899425 implements MigrationInterface {
       `('Sunday','Sun', 0)`;
 
     await queryRunner.query(weekdaySQL);
+    await appManager.migrateFromCsvToDb();
   }
 }
