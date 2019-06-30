@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { AppManager } from "./service/AppManager";
 import { IApiFindRestRequestData } from "./interfaces";
 
