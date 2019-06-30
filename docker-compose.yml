@@ -1,5 +1,10 @@
 version: '3.7'
 
+# Volumes
+#================================================
+volumes:
+    r-mysql-db:
+
 services:
 
   r-node:
@@ -17,4 +22,31 @@ services:
     command: ["npm", "run", "start:debug"]
 #    command: ["ping", "127.0.0.1"]
     working_dir: /app
+    logging:
+        options:
+            max-size: "10m"
+            max-file: "5"
 
+  r-db:
+      image: mysql:8.0.16
+      environment:
+          - MYSQL_DATABASE=rest
+          - MYSQL_USER=rest
+          - MYSQL_PASSWORD=rest
+          - MYSQL_ROOT_PASSWORD=rest-root
+      volumes:
+          - type: volume
+            source: r-mysql-db
+            target: /var/lib/mysql
+          - type: bind
+            source: ./docker/r-db/mysql-config-file.cnf
+            target: /etc/mysql/conf.d/config-file.cnf
+          - type: bind
+            source: ./docker/r-db/init
+            target: /docker-entrypoint-initdb.d
+      ports:
+          - "${NODE_BACK_DB_PORT}:3306"
+      logging:
+          options:
+              max-size: "10m"
+              max-file: "5"

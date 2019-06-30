@@ -1,0 +1,6 @@
+[mysqld]
+skip-log-bin
+default-time-zone='+00:00'
+event_scheduler=ON
+default_authentication_plugin=mysql_native_password
+log_bin_trust_function_creators=1
