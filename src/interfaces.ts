@@ -18,3 +18,7 @@ export interface IRestTimeGroup {
   end: number;
   days: string[];
 }
+
+export interface IApiFindRestRequestData {
+  datetime: string
+}
