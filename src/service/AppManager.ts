@@ -2,11 +2,17 @@ import * as fs from 'fs';
 import * as readline from 'readline';
 import { IRest, IRestSchedule, IRestScheduleWorkTime, IRestTimeGroup } from "../interfaces";
 
-const DB_DIR = '/app/src/db';
+const DEFAULT_CSV_FILE_PATH = `${__dirname}/../db/rest_hours.csv`;
 
 export class AppManager {
 
   private restData: IRest[] = [];
+
+  constructor() {
+    if (!fs.existsSync(DEFAULT_CSV_FILE_PATH)) {
+      throw new Error(`File "${DEFAULT_CSV_FILE_PATH}" not found`);
+    }
+  }
 
   private calcSecondsSinceDayStart(line: string): number {
     const [timeLine, meridiem] = line.split(' ');
@@ -29,7 +35,7 @@ export class AppManager {
 
     const days = [];
     for (let part of dayParts) {
-      if (part.includes("-")) {
+      if (part.includes('-')) {
         const [dayStart, dayEnd] = part.split('-');
 
         const startIdx = WEEK_DAYS.indexOf(dayStart);
@@ -67,21 +73,26 @@ export class AppManager {
       return this.parseScheduleTimeGroupLine(value);
     });
 
-    const schedule: IRestSchedule = {
-      Mon: {start: 0, end: 0},
-      Tue: {start: 0, end: 0},
-      Wed: {start: 0, end: 0},
-      Thu: {start: 0, end: 0},
-      Fri: {start: 0, end: 0},
-      Sat: {start: 0, end: 0},
-      Sun: {start: 0, end: 0},
-    };
+    const schedule: IRestSchedule = [
+      {dayOfWeekAlias: 'Mon', dayOfWeekNum: 1, start: 0, end: 0},
+      {dayOfWeekAlias: 'Tue', dayOfWeekNum: 2, start: 0, end: 0},
+      {dayOfWeekAlias: 'Wed', dayOfWeekNum: 3, start: 0, end: 0},
+      {dayOfWeekAlias: 'Thu', dayOfWeekNum: 4, start: 0, end: 0},
+      {dayOfWeekAlias: 'Fri', dayOfWeekNum: 4, start: 0, end: 0},
+      {dayOfWeekAlias: 'Sat', dayOfWeekNum: 6, start: 0, end: 0},
+      {dayOfWeekAlias: 'Sun', dayOfWeekNum: 0, start: 0, end: 0},
+    ];
 
     for (const oneTimeGroup of timeGroups) {
-      oneTimeGroup.days.forEach((value) => {
-        if (schedule.hasOwnProperty(value)) {
-          schedule[value].start = oneTimeGroup.start;
-          schedule[value].end = oneTimeGroup.end;
+      oneTimeGroup.days.forEach((dayOfWeekAlias) => {
+
+        const idx = schedule.findIndex((value) => {
+          return value.dayOfWeekAlias === dayOfWeekAlias;
+        });
+
+        if (-1 !== idx) {
+          schedule[idx].start = oneTimeGroup.start;
+          schedule[idx].end = oneTimeGroup.end;
         }
       });
     }
@@ -89,7 +100,7 @@ export class AppManager {
     return schedule
   }
 
-  private parseLine(line: string): IRest  {
+  private parseCsvLine(line: string): IRest {
 
     const [name, scheduleLine] = line
       .replace(/^"+|"+$/g, '')
@@ -102,22 +113,40 @@ export class AppManager {
     }
   }
 
-  public loadCSV(csvPath: string) {
+  private async loadCSV(csvPath: string) {
+
+    this.restData = [];
 
     const rl = readline.createInterface({
       input: fs.createReadStream(`${csvPath}`)
     });
 
-    rl.on('line', (line) => {
-        this.restData.push(this.parseLine(line));
-    });
+    for await (const line of rl) {
+      this.restData.push(this.parseCsvLine(line));
+    }
 
-    rl.on('close', (line) => {
-      this.restData.forEach(e => {
-        console.log(e.name, e.schedule, e.scheduleRAW);
-        console.log('--------------------------------------');
+    // this.restData.forEach(e => {
+    //   console.log(e.name, e.schedule, e.scheduleRAW);
+    //   console.log('--------------------------------------');
+    // });
+
+  }
+
+  public async findOpenRestaurants(searchDatetime: Date, csvFilename = DEFAULT_CSV_FILE_PATH): Promise<string[]> {
+
+    await this.loadCSV(csvFilename);
+
+    const weekDayNum = searchDatetime.getDay();
+    const secondsOfDay = searchDatetime.getHours() * 3600 + searchDatetime.getMinutes() * 60 + searchDatetime.getSeconds();
+
+    return this.restData.filter((oneRestData) => {
+      const idx = oneRestData.schedule.findIndex((oneDay) => {
+        return oneDay.dayOfWeekNum === weekDayNum
+          && oneDay.start < secondsOfDay
+          && oneDay.end > secondsOfDay;
       });
-    });
+      return -1 !== idx
+    }).map(element => element.scheduleRAW);
 
   }
 

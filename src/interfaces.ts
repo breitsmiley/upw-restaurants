@@ -1,17 +1,11 @@
 export interface IRestScheduleWorkTime {
+  dayOfWeekAlias: string;
+  dayOfWeekNum: number;
   start: number;
   end: number;
 }
 
-export interface IRestSchedule {
-  Mon: IRestScheduleWorkTime;
-  Tue: IRestScheduleWorkTime;
-  Wed: IRestScheduleWorkTime;
-  Thu: IRestScheduleWorkTime;
-  Fri: IRestScheduleWorkTime;
-  Sat: IRestScheduleWorkTime;
-  Sun: IRestScheduleWorkTime;
-}
+export type IRestSchedule = IRestScheduleWorkTime[];
 
 export interface IRest {
   name: string;
