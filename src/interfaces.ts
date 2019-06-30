@@ -19,6 +19,19 @@ export interface IRestTimeGroup {
   days: string[];
 }
 
-export interface IApiFindRestRequestData {
+export interface IApiFindRestRequest {
   datetime: string
 }
+
+export interface IApiFindRestResponseOneRest {
+  name: string;
+  scheduleRAW: string;
+}
+
+export type IApiFindRestResponseData = IApiFindRestResponseOneRest[];
+
+export interface IApiFindRestResponse {
+  status: boolean
+  data: IApiFindRestResponseData
+}
+

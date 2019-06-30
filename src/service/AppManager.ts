@@ -161,21 +161,23 @@ export class AppManager {
 
   }
 
-  public async findOpenRestaurants(searchDatetime: Date, csvFilename = DEFAULT_CSV_FILE_PATH): Promise<string[]> {
+  public async findOpenRestaurants(searchDatetime: Date, csvFilename = DEFAULT_CSV_FILE_PATH): Promise<IRest[]> {
 
     await this.loadCSV(csvFilename);
 
     const weekDayNum = searchDatetime.getDay();
-    const secondsOfDay = searchDatetime.getHours() * 3600 + searchDatetime.getMinutes() * 60 + searchDatetime.getSeconds();
+    const secondsOfDay = searchDatetime.getUTCHours() * 3600 + searchDatetime.getUTCMinutes() * 60 + searchDatetime.getUTCSeconds();
+
+    console.log(searchDatetime.getUTCHours(), secondsOfDay, secondsOfDay);
 
     return this.restData.filter((oneRestData) => {
       const idx = oneRestData.schedule.findIndex((oneDay) => {
         return oneDay.dayOfWeekNum === weekDayNum
-          && oneDay.open < secondsOfDay
-          && oneDay.close > secondsOfDay;
+          && oneDay.open <= secondsOfDay
+          && oneDay.close >= secondsOfDay;
       });
       return -1 !== idx
-    }).map(element => element.scheduleRAW);
+    });
 
   }
 
@@ -192,7 +194,7 @@ export class AppManager {
     return [h, m]
   }
 
-  public async findOpenRestaurantsInDB(searchDatetime: Date): Promise<string[]> {
+  public async findOpenRestaurantsInDB(searchDatetime: Date): Promise<IRest[]> {
 
     await this.loadCSV(DEFAULT_CSV_FILE_PATH);
 
@@ -202,11 +204,11 @@ export class AppManager {
     return this.restData.filter((oneRestData) => {
       const idx = oneRestData.schedule.findIndex((oneDay) => {
         return oneDay.dayOfWeekNum === weekDayNum
-          && oneDay.open < secondsOfDay
-          && oneDay.close > secondsOfDay;
+          && oneDay.open <= secondsOfDay
+          && oneDay.close >= secondsOfDay;
       });
       return -1 !== idx
-    }).map(element => element.scheduleRAW);
+    });
 
   }
 

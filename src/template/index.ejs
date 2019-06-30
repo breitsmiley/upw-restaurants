@@ -7,16 +7,151 @@
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.0-alpha14/css/tempusdominus-bootstrap-4.min.css" />
 
-    <title>Hello, world!</title>
+    <title>Find Opened Restaurants</title>
 </head>
 <body>
-<h1>Hello, world!</h1>
 
+
+<div class="container">
+    <h1>Find Opened Restaurants</h1>
+<form id="searchForm">
+    <div class="form-group row">
+        <label for="datetimepicker1" class="col-sm-2 col-form-label">Date (UTC)</label>
+        <div class="col-sm-4">
+            <div class="input-group date" id="datetimepicker1" data-target-input="nearest">
+                <input type="text" name="datetime" readonly class="form-control datetimepicker-input" data-target="#datetimepicker1"/>
+                <div class="input-group-append" data-target="#datetimepicker1" data-toggle="datetimepicker">
+                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" id="inputDatetime" name=""/>
+    </div>
+    <fieldset class="form-group">
+        <div class="row">
+            <legend class="col-form-label col-sm-2 pt-0">Search source</legend>
+            <div class="col-sm-10">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="type" id="radiosCSV" value="csv" checked>
+                    <label class="form-check-label" for="radiosCSV">
+                        CSV
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="type" id="radiosDB" value="db">
+                    <label class="form-check-label" for="radiosDB">
+                        MySQL
+                    </label>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+
+    <div class="form-group row">
+        <div class="col-sm-10">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </div>
+</form>
+<hr>
+<table id="resultTable" class="table table-striped" style="display: none;">
+    <thead>
+    <tr>
+        <th scope="col">Name</th>
+        <th scope="col">RAW schedule</th>
+    </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+</div>
 <!-- Optional JavaScript -->
 <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.25/moment-timezone.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.0-alpha14/js/tempusdominus-bootstrap-4.min.js"></script>
+<script>
+    $(() => {
+
+        // const nowDate = new Date();
+        // const $inputDatetime = $('#inputDatetime');
+        // $inputDatetime.val(nowDate.toJSON());
+
+        const $resultTable = $("#resultTable");
+        const $resultTableBody = $("tbody", $resultTable);
+        const $form = $("#searchForm");
+        const form = $form.get(0);
+        const $submitButton = $(":submit", $form);
+        const $datetimepicker = $('#datetimepicker1');
+        $datetimepicker.datetimepicker({
+            defaultDate: new Date(),
+            timeZone: 'UTC',
+            ignoreReadonly: true,
+            icons: {
+                time: 'fas fa-clock',
+                date: 'fas fa-calendar',
+                up: 'fas fa-arrow-up',
+                down: 'fas fa-arrow-down',
+                previous: 'fas fa-chevron-left',
+                next: 'fas fa-chevron-right',
+                today: 'fas fa-calendar-check-o',
+                clear: 'fas fa-delete',
+                close: 'fas fa-times'
+            }
+        });
+
+        // Change Order Status
+        $form.on("submit", (e) => {
+
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const typeInput = formData.get('type');
+            const url = typeInput === 'csv' ? '/findInCSV' : '/findInDB';
+            const datetime = $datetimepicker.datetimepicker('date').toDate();
+
+            const putData = {
+                datetime: datetime
+            }
+
+            $.ajax({
+                type: 'PUT',
+                contentType: "application/json",
+                dataType: "json",
+                url: url,
+                data: JSON.stringify(putData),
+
+                beforeSend: () => {
+                    $submitButton.prop('disabled', true);
+                    $resultTable.hide();
+                    $resultTableBody.html('');
+                },
+                complete: () => {
+                    $submitButton.prop('disabled', false);
+                    $resultTable.show();
+                }
+            }).done((data) => {
+                if (data.status) {
+                    console.log(data.data);
+                    data.data.forEach((element) => {
+                        $resultTableBody.append(`<tr><td>${element.name}</td><td>${element.scheduleRAW}</td></tr>`)
+                    });
+                } else {
+                    console.error('Data error');
+                }
+            }).fail((jqXHR, textStatus, errorThrown) => {
+                console.error(errorThrown);
+            });
+        });
+    });
+
+</script>
+
 </body>
 </html>

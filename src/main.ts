@@ -1,6 +1,11 @@
 import "reflect-metadata";
 import { AppManager } from "./service/AppManager";
-import { IApiFindRestRequestData } from "./interfaces";
+import {
+  IApiFindRestRequest,
+  IApiFindRestResponse,
+  IApiFindRestResponseData,
+  IApiFindRestResponseOneRest
+} from "./interfaces";
 import { createConnection } from "typeorm";
 
 (async() => {
@@ -30,13 +35,22 @@ import { createConnection } from "typeorm";
 
     const appManager = new AppManager();
 
-    const requestData: IApiFindRestRequestData = request.body;
+    const requestData: IApiFindRestRequest = request.body;
 
     const date = new Date(requestData.datetime);
     const result = await appManager.findOpenRestaurants(date);
 
+    const data: IApiFindRestResponseData = result.map((element) => {
+      return {name: element.name, scheduleRAW: element.scheduleRAW}
+    });
+
+    const response: IApiFindRestResponse = {
+      status: true,
+      data: data
+    };
+
     reply.type('application/json').code(200);
-    return result;
+    return response;
   });
 
 // API - PUT /findInDB
@@ -45,13 +59,22 @@ import { createConnection } from "typeorm";
 
     const appManager = new AppManager();
 
-    const requestData: IApiFindRestRequestData = request.body;
+    const requestData: IApiFindRestRequest = request.body;
 
     const date = new Date(requestData.datetime);
     const result = await appManager.findOpenRestaurantsInDB(date);
 
+    const data: IApiFindRestResponseData = result.map((element) => {
+      return {name: element.name, scheduleRAW: element.scheduleRAW}
+    });
+
+    const response: IApiFindRestResponse = {
+      status: true,
+      data: data
+    };
+
     reply.type('application/json').code(200);
-    return result;
+    return response;
   });
 
   fastify.listen(3000, '0.0.0.0', (error, address) => {
