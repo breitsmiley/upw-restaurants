@@ -17,7 +17,7 @@ export class AppManager {
     }
   }
 
-  public provideMysqlConnectionOptions(): MysqlConnectionOptions {
+  static provideMysqlConnectionOptions(): MysqlConnectionOptions {
     return {
       name: "default",
       type: "mysql",

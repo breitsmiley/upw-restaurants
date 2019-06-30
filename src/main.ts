@@ -3,18 +3,32 @@ import { AppManager } from "./service/AppManager";
 import { IApiFindRestRequestData } from "./interfaces";
 import { createConnection } from "typeorm";
 
-
-async function main() {
-  const appManager = new AppManager();
-  await createConnection(appManager.provideMysqlConnectionOptions());
+(async() => {
+  await createConnection(AppManager.provideMysqlConnectionOptions());
 
   const fastify = require('fastify')({
     logger: true
+  });
+  const resolve = require('path').resolve;
+  fastify.register(require('point-of-view'), {
+    engine: {
+      ejs: require('ejs')
+    },
+    templates: '/app/src/template',
+  });
+
+
+// Index Page Front
+//---------------------------------------------------------------
+  fastify.get('/', (req, reply) => {
+    reply.view('index.ejs', { test: 'test111' })
   });
 
 // API - PUT /findInCSV
 //---------------------------------------------------------------
   fastify.put('/findInCSV', async (request, reply) => {
+
+    const appManager = new AppManager();
 
     const requestData: IApiFindRestRequestData = request.body;
 
@@ -28,6 +42,8 @@ async function main() {
 // API - PUT /findInDB
 //---------------------------------------------------------------
   fastify.put('/findInDB', async (request, reply) => {
+
+    const appManager = new AppManager();
 
     const requestData: IApiFindRestRequestData = request.body;
 
@@ -44,9 +60,8 @@ async function main() {
     }
     fastify.log.info(`server listening on ${address}`)
   });
-}
 
-main();
+})();
 
 
 
