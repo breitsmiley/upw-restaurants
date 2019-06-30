@@ -1,8 +1,8 @@
 export interface IRestScheduleWorkTime {
   dayOfWeekAlias: string;
   dayOfWeekNum: number;
-  start: number;
-  end: number;
+  open: number;
+  close: number;
 }
 
 export type IRestSchedule = IRestScheduleWorkTime[];
@@ -14,8 +14,8 @@ export interface IRest {
 }
 
 export interface IRestTimeGroup {
-  start: number;
-  end: number;
+  open: number;
+  close: number;
   days: string[];
 }
 

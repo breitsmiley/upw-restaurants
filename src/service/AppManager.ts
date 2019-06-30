@@ -61,8 +61,8 @@ export class AppManager {
       .groups;
 
     return {
-      start: this.calcSecondsSinceDayStart(startLine),
-      end: this.calcSecondsSinceDayStart(endLine),
+      open: this.calcSecondsSinceDayStart(startLine),
+      close: this.calcSecondsSinceDayStart(endLine),
       days: this.parseDaysLine(daysLine)
     };
   }
@@ -74,13 +74,13 @@ export class AppManager {
     });
 
     const schedule: IRestSchedule = [
-      {dayOfWeekAlias: 'Mon', dayOfWeekNum: 1, start: 0, end: 0},
-      {dayOfWeekAlias: 'Tue', dayOfWeekNum: 2, start: 0, end: 0},
-      {dayOfWeekAlias: 'Wed', dayOfWeekNum: 3, start: 0, end: 0},
-      {dayOfWeekAlias: 'Thu', dayOfWeekNum: 4, start: 0, end: 0},
-      {dayOfWeekAlias: 'Fri', dayOfWeekNum: 4, start: 0, end: 0},
-      {dayOfWeekAlias: 'Sat', dayOfWeekNum: 6, start: 0, end: 0},
-      {dayOfWeekAlias: 'Sun', dayOfWeekNum: 0, start: 0, end: 0},
+      {dayOfWeekAlias: 'Mon', dayOfWeekNum: 1, open: 0, close: 0},
+      {dayOfWeekAlias: 'Tue', dayOfWeekNum: 2, open: 0, close: 0},
+      {dayOfWeekAlias: 'Wed', dayOfWeekNum: 3, open: 0, close: 0},
+      {dayOfWeekAlias: 'Thu', dayOfWeekNum: 4, open: 0, close: 0},
+      {dayOfWeekAlias: 'Fri', dayOfWeekNum: 4, open: 0, close: 0},
+      {dayOfWeekAlias: 'Sat', dayOfWeekNum: 6, open: 0, close: 0},
+      {dayOfWeekAlias: 'Sun', dayOfWeekNum: 0, open: 0, close: 0},
     ];
 
     for (const oneTimeGroup of timeGroups) {
@@ -91,8 +91,8 @@ export class AppManager {
         });
 
         if (-1 !== idx) {
-          schedule[idx].start = oneTimeGroup.start;
-          schedule[idx].end = oneTimeGroup.end;
+          schedule[idx].open = oneTimeGroup.open;
+          schedule[idx].close = oneTimeGroup.close;
         }
       });
     }
@@ -142,8 +142,26 @@ export class AppManager {
     return this.restData.filter((oneRestData) => {
       const idx = oneRestData.schedule.findIndex((oneDay) => {
         return oneDay.dayOfWeekNum === weekDayNum
-          && oneDay.start < secondsOfDay
-          && oneDay.end > secondsOfDay;
+          && oneDay.open < secondsOfDay
+          && oneDay.close > secondsOfDay;
+      });
+      return -1 !== idx
+    }).map(element => element.scheduleRAW);
+
+  }
+
+  public async findOpenRestaurantsInDB(searchDatetime: Date): Promise<string[]> {
+
+    await this.loadCSV(DEFAULT_CSV_FILE_PATH);
+
+    const weekDayNum = searchDatetime.getDay();
+    const secondsOfDay = searchDatetime.getHours() * 3600 + searchDatetime.getMinutes() * 60 + searchDatetime.getSeconds();
+
+    return this.restData.filter((oneRestData) => {
+      const idx = oneRestData.schedule.findIndex((oneDay) => {
+        return oneDay.dayOfWeekNum === weekDayNum
+          && oneDay.open < secondsOfDay
+          && oneDay.close > secondsOfDay;
       });
       return -1 !== idx
     }).map(element => element.scheduleRAW);

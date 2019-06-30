@@ -7,12 +7,27 @@ const fastify = require('fastify')({
   logger: true
 });
 
+// API - PUT /findInCSV
+//---------------------------------------------------------------
 fastify.put('/findInCSV', async (request, reply) => {
 
   const requestData: IApiFindRestRequestData = request.body;
 
   const date = new Date(requestData.datetime);
   const result = await appManager.findOpenRestaurants(date);
+
+  reply.type('application/json').code(200);
+  return result;
+});
+
+// API - PUT /findInDB
+//---------------------------------------------------------------
+fastify.put('/findInDB', async (request, reply) => {
+
+  const requestData: IApiFindRestRequestData = request.body;
+
+  const date = new Date(requestData.datetime);
+  const result = await appManager.findOpenRestaurantsInDB(date);
 
   reply.type('application/json').code(200);
   return result;
