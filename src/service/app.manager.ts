@@ -30,10 +30,10 @@ export class AppManager {
       synchronize: false,
       logging: true,
       entities: [
-        "src/entity/**/*.ts"
+        "src/entity/*.entity.{js,ts}"
       ],
       migrations: [
-        "src/migration/**/*.ts"
+        "src/migration/*.{js,ts}"
       ],
       cli: {
         migrationsDir: 'src/migration'

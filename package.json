@@ -9,7 +9,8 @@
       "start:dev": "npm i && nodemon",
       "start:debug": "npm i && nodemon --config nodemon-debug.json",
       "prestart:prod": "rimraf dist && tsc",
-      "start:prod": "node dist/src/main.js"
+      "start:prod": "node dist/src/main.js",
+      "start:preprod": "npm run prestart:prod && node dist/src/main.js"
    },
    "devDependencies": {
       "@types/node": "^12.0.10",
@@ -24,6 +25,7 @@
       "mysql": "^2.17.1",
       "point-of-view": "^3.5.0",
       "reflect-metadata": "^0.1.13",
+      "rimraf": "^2.6.3",
       "typeorm": "^0.2.18"
    }
 }
