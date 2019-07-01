@@ -16,4 +16,10 @@ export class RestaurantEntity {
         length: 64
     })
     name: string;
+
+    @Column({
+        type: 'varchar',
+        length: 255
+    })
+    scheduleRAW: string;
 }

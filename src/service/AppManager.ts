@@ -4,6 +4,7 @@ import { MysqlConnectionOptions } from "typeorm/driver/mysql/MysqlConnectionOpti
 import { createConnection, Connection, getConnection } from "typeorm";
 import { IRest, IRestSchedule, IRestTimeGroup } from "../interfaces";
 import { RestaurantRepository, WeekdayRepository, ScheduleRepository } from "../repository";
+import { RestaurantEntity } from "../entity";
 
 const DEFAULT_CSV_FILE_PATH = `${__dirname}/../db/rest_hours.csv`;
 
@@ -27,7 +28,7 @@ export class AppManager {
       password: "rest",
       database: "rest",
       synchronize: false,
-      logging: false,
+      logging: true,
       entities: [
         "src/entity/**/*.ts"
       ],
@@ -49,7 +50,9 @@ export class AppManager {
     const minutes = m === undefined ? 0 : parseInt(m);
 
     const meridiemCorrection = meridiem === 'pm' ? 12 * 3600 : 0;
-    return (hours * 3600 + minutes * 60) + meridiemCorrection;
+
+    const result = (hours * 3600 + minutes * 60) + meridiemCorrection;
+    return result === 24 * 3600 ? 0 : result;
 
   }
 
@@ -161,26 +164,6 @@ export class AppManager {
 
   }
 
-  public async findOpenRestaurants(searchDatetime: Date, csvFilename = DEFAULT_CSV_FILE_PATH): Promise<IRest[]> {
-
-    await this.loadCSV(csvFilename);
-
-    const weekDayNum = searchDatetime.getDay();
-    const secondsOfDay = searchDatetime.getUTCHours() * 3600 + searchDatetime.getUTCMinutes() * 60 + searchDatetime.getUTCSeconds();
-
-    console.log(searchDatetime.getUTCHours(), secondsOfDay, secondsOfDay);
-
-    return this.restData.filter((oneRestData) => {
-      const idx = oneRestData.schedule.findIndex((oneDay) => {
-        return oneDay.dayOfWeekNum === weekDayNum
-          && oneDay.open <= secondsOfDay
-          && oneDay.close >= secondsOfDay;
-      });
-      return -1 !== idx
-    });
-
-  }
-
   private getHourAndMinutesFromSeconds(seconds: number) {
     const hIntDec = seconds / 3600;
     const hFloatDec = hIntDec % 1;
@@ -194,12 +177,17 @@ export class AppManager {
     return [h, m]
   }
 
-  public async findOpenRestaurantsInDB(searchDatetime: Date): Promise<IRest[]> {
+  private addLeadingZero(num: number) {
 
-    await this.loadCSV(DEFAULT_CSV_FILE_PATH);
+    return num < 10 ? `0${num}` : `${num}`;
+  }
+
+  public async findOpenRestaurants(searchDatetime: Date, csvFilename = DEFAULT_CSV_FILE_PATH): Promise<IRest[]> {
+
+    await this.loadCSV(csvFilename);
 
     const weekDayNum = searchDatetime.getDay();
-    const secondsOfDay = searchDatetime.getHours() * 3600 + searchDatetime.getMinutes() * 60 + searchDatetime.getSeconds();
+    const secondsOfDay = searchDatetime.getUTCHours() * 3600 + searchDatetime.getUTCMinutes() * 60 + searchDatetime.getUTCSeconds();
 
     return this.restData.filter((oneRestData) => {
       const idx = oneRestData.schedule.findIndex((oneDay) => {
@@ -212,6 +200,20 @@ export class AppManager {
 
   }
 
+  public async findOpenRestaurantsInDB(searchDatetime: Date): Promise<RestaurantEntity[]> {
+
+    const weekDayNum = searchDatetime.getDay();
+    const hours = searchDatetime.getUTCHours();
+    const minutes = searchDatetime.getUTCMinutes();
+    const seconds = searchDatetime.getUTCSeconds();
+
+    const time = `${this.addLeadingZero(hours)}:${this.addLeadingZero(minutes)}:${this.addLeadingZero(seconds)}`;
+
+    const conn = getConnection();
+    const restaurantRepository = conn.getCustomRepository(RestaurantRepository);
+
+    return await restaurantRepository.findOpened(weekDayNum, time);
+  }
 
   /**
    * TODO improve performance by bulk insert
@@ -227,7 +229,7 @@ export class AppManager {
 
     for (const oneRest of restData) {
 
-      const restEntityObj = await restaurantRepository.add(oneRest.name);
+      const restEntityObj = await restaurantRepository.add(oneRest.name, oneRest.scheduleRAW);
 
       for (const oneSchedule of oneRest.schedule) {
         const weekdayEntityObj = await weekdayRepository.findOne({
