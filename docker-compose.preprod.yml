@@ -8,7 +8,7 @@ volumes:
 services:
 
   r-node:
-    image: breitsmiley/upw-rest-preprod:latest
+    image: breitsmiley/upw-rest-preprod:0.0.2
     environment:
       - APP_D_ENTRYPOINT_MODE=init
     ports:
