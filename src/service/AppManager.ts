@@ -107,7 +107,7 @@ export class AppManager {
       {dayOfWeekAlias: 'Tue', dayOfWeekNum: 2, open: 0, close: 0},
       {dayOfWeekAlias: 'Wed', dayOfWeekNum: 3, open: 0, close: 0},
       {dayOfWeekAlias: 'Thu', dayOfWeekNum: 4, open: 0, close: 0},
-      {dayOfWeekAlias: 'Fri', dayOfWeekNum: 4, open: 0, close: 0},
+      {dayOfWeekAlias: 'Fri', dayOfWeekNum: 5, open: 0, close: 0},
       {dayOfWeekAlias: 'Sat', dayOfWeekNum: 6, open: 0, close: 0},
       {dayOfWeekAlias: 'Sun', dayOfWeekNum: 0, open: 0, close: 0},
     ];
