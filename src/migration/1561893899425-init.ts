@@ -1,5 +1,5 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
-import { AppManager } from "../service/AppManager";
+import { AppManager } from "../service";
 const appManager = new AppManager();
 
 export class init1561893899425 implements MigrationInterface {

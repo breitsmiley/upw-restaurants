@@ -1,3 +1,3 @@
-import { AppManager } from "./src/service/AppManager";
+import { AppManager } from "./src/service";
 
 export = AppManager.provideMysqlConnectionOptions();

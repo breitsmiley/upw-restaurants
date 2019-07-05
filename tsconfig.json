@@ -9,6 +9,9 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "esnext",
+    "lib": [
+      "esnext"
+    ],
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./src"

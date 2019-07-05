@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { AppManager } from "./service/AppManager";
+import { AppManager } from "./service";
 import {
   IApiFindRestRequest,
   IApiFindRestResponse,
