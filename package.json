@@ -26,6 +26,6 @@
       "point-of-view": "^3.5.0",
       "reflect-metadata": "^0.1.13",
       "rimraf": "^2.6.3",
-      "typeorm": "^0.2.18"
+      "typeorm": "^0.2.25"
    }
 }
